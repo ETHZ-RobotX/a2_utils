@@ -3,7 +3,7 @@
 #include <vector>
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
-#include "unitree_go/msg/low_state.hpp"
+#include "unitree_hg/msg/low_state.hpp"
 
 class JointStatesPub : public rclcpp::Node
 {
@@ -13,7 +13,7 @@ public:
   {
     pub_ = create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
 
-    sub_ = create_subscription<unitree_go::msg::LowState>(
+    sub_ = create_subscription<unitree_hg::msg::LowState>(
       "/lowstate", 10,
       std::bind(&JointStatesPub::lowstate_callback, this, std::placeholders::_1));
 
@@ -26,7 +26,7 @@ public:
   }
 
 private:
-  void lowstate_callback(const unitree_go::msg::LowState::SharedPtr msg)
+  void lowstate_callback(const unitree_hg::msg::LowState::SharedPtr msg)
   {
     // Throttle to 200 Hz — matches robot state update rate.
     if ((this->now() - last_pub_).seconds() < 0.005) return;
@@ -44,7 +44,7 @@ private:
   }
 
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr pub_;
-  rclcpp::Subscription<unitree_go::msg::LowState>::SharedPtr sub_;
+  rclcpp::Subscription<unitree_hg::msg::LowState>::SharedPtr sub_;
   std::vector<std::string> joint_names_;
   rclcpp::Time last_pub_{0, 0, RCL_ROS_TIME};
 };
