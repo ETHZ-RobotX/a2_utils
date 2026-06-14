@@ -33,10 +33,10 @@ public:
     target_frame_ = get_parameter("target_frame").as_string();
     tf_lag_       = get_parameter("tf_lag_sec").as_double();
 
-    pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("/registered_scan", 10);
+    pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("/registered_scan", 1);
 
     sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-      input_topic_, 10,
+      input_topic_, 1,
       std::bind(&RegisteredScanPub::cloud_callback, this, std::placeholders::_1));
 
     RCLCPP_INFO(get_logger(),
@@ -71,7 +71,7 @@ private:
 
       pub_->publish(cloud_out);
     } catch (const tf2::TransformException & e) {
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000,
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 500,
         "TF lookup failed: %s", e.what());
     }
   }
