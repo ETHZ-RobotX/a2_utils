@@ -78,6 +78,7 @@ bool ModeFsm::set_cmd_vel(float x, float y, float yaw) {
     cmd_vel_[0] = std::clamp(x, -max_vel_x_, max_vel_x_);
     cmd_vel_[1] = std::clamp(y, -max_vel_y_, max_vel_y_);
     cmd_vel_[2] = std::clamp(yaw, -max_yaw_rate_, max_yaw_rate_);
+    last_cmd_vel_time_ = std::chrono::steady_clock::now();
     return true;
   }
   
@@ -94,7 +95,9 @@ std::pair<OpMode, bool> ModeFsm::get_mode() {
 
 std::array<float, 3> ModeFsm::get_cmd_vel() {
   auto rval = cmd_vel_;
-  // reset_cmd_vel();
+  auto age = std::chrono::steady_clock::now() - last_cmd_vel_time_;
+  if (age > std::chrono::milliseconds(100))
+    reset_cmd_vel();
   return rval;
 }
 

@@ -2,6 +2,7 @@
 #define A2_BRIDGE_MODE_FSM_H_
 
 #include <array>
+#include <chrono>
 #include <cstdint>
 #include <utility>
 
@@ -49,6 +50,7 @@ private:
   bool mode_changed_;
 
   std::array<float, 3> cmd_vel_;
+  std::chrono::steady_clock::time_point last_cmd_vel_time_{};
   const float max_vel_x_;
   const float max_vel_y_;
   const float max_yaw_rate_;
