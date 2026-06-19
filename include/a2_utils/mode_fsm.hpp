@@ -17,6 +17,10 @@ enum class OpMode : uint8_t {
   FREE = 5,           // Stops the robot but does not disable anything
 };
 
+// Human-readable name for an operating mode, e.g. "STAND_UP". Returns "UNKNOWN"
+// for out-of-range values.
+const char* to_string(OpMode mode);
+
 // thread unsafe — caller must manage locks
 class ModeFsm {
 public:
@@ -31,6 +35,9 @@ public:
   // Read by control loop. Once read, changed flag resets.
   std::pair<OpMode, bool> get_mode();
   std::array<float, 3> get_cmd_vel();
+
+  // Non-consuming read of the current mode; does not touch the changed flag.
+  OpMode peek_mode() const { return mode_; }
 
 private:
   bool free_reset_allowed(OpMode next);

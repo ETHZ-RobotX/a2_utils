@@ -6,6 +6,7 @@
 #include <mutex>
 #include <rclcpp/rclcpp.hpp>
 #include "a2_interfaces/msg/operating_mode.hpp"
+#include "a2_interfaces/srv/set_operating_mode.hpp"
 #include "a2_utils/mode_fsm.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 
@@ -14,7 +15,13 @@ namespace utils {
 
 /*
  * ROS interface for the mode FSM. Owns /a2/mode and /cmd_vel subscriptions,
- * a 50 Hz control timer, and the underlying ModeFsm + mutex.
+ * the /a2/set_mode service, a 50 Hz control timer, and the underlying ModeFsm
+ * + mutex.
+ *
+ * Mode requests arrive two ways, both funnelled through ModeFsm::mode_transition
+ * under state_mutex_: the /a2/mode topic (fire-and-forget, used by the reactive
+ * joystick teleop) and the /a2/set_mode service (returns accept/reject feedback,
+ * used by deliberate/scripted requests such as the `a2` CLI).
  *
  * Subclasses implement onControl() to drive hardware or sim — topic names,
  * FSM logic, and cmd_vel age rejection are shared automatically.
@@ -37,8 +44,11 @@ protected:
 
 private:
   void setupSubscribers();
+  void setupServices();
   void setupTimers();
   void modeCallback(const a2_interfaces::msg::OperatingMode::SharedPtr msg);
+  void setModeService(const std::shared_ptr<a2_interfaces::srv::SetOperatingMode::Request> req,
+                      std::shared_ptr<a2_interfaces::srv::SetOperatingMode::Response> res);
   void cmdVelCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
   void controlLoop();
 
@@ -48,6 +58,7 @@ private:
   ModeFsm mode_fsm_;
   std::mutex state_mutex_;
   rclcpp::Subscription<a2_interfaces::msg::OperatingMode>::SharedPtr mode_sub_;
+  rclcpp::Service<a2_interfaces::srv::SetOperatingMode>::SharedPtr mode_srv_;
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_vel_sub_;
   rclcpp::TimerBase::SharedPtr timer_;
 };

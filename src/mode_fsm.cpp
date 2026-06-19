@@ -7,6 +7,18 @@
 namespace a2 {
 namespace utils {
 
+const char* to_string(OpMode mode) {
+  switch (mode) {
+    case OpMode::ESTOP:         return "ESTOP";
+    case OpMode::STAND_DOWN:    return "STAND_DOWN";
+    case OpMode::STAND_UP:      return "STAND_UP";
+    case OpMode::BALANCE_STAND: return "BALANCE_STAND";
+    case OpMode::VELOCITY_MOVE: return "VELOCITY_MOVE";
+    case OpMode::FREE:          return "FREE";
+  }
+  return "UNKNOWN";
+}
+
 static constexpr std::array<std::pair<OpMode, OpMode>, 9> kValidTransitions = {{
   // Reset behaviors
   {OpMode::ESTOP, OpMode::STAND_DOWN},
@@ -17,6 +29,7 @@ static constexpr std::array<std::pair<OpMode, OpMode>, 9> kValidTransitions = {{
   {OpMode::BALANCE_STAND, OpMode::VELOCITY_MOVE},
   {OpMode::VELOCITY_MOVE, OpMode::BALANCE_STAND},
   {OpMode::BALANCE_STAND, OpMode::STAND_UP},
+  {OpMode::BALANCE_STAND, OpMode::STAND_DOWN},
   {OpMode::STAND_UP, OpMode::STAND_DOWN},
 }};
 
