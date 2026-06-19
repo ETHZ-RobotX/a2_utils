@@ -1,6 +1,8 @@
 #include "a2_utils/safe_velocity_ros_interface.hpp"
 
 #include <chrono>
+#include <memory>
+#include <string>
 #include <rclcpp/logging.hpp>
 
 namespace {
@@ -21,6 +23,7 @@ SafeVelocityRosInterface::SafeVelocityRosInterface(float max_vel_x, float max_ve
 void SafeVelocityRosInterface::init(rclcpp::Node* node) {
   node_ = node;
   setupSubscribers();
+  setupServices();
   setupTimers();
 }
 
@@ -34,18 +37,48 @@ void SafeVelocityRosInterface::setupSubscribers() {
     [this](const geometry_msgs::msg::TwistStamped::SharedPtr msg) { cmdVelCallback(msg); });
 }
 
+void SafeVelocityRosInterface::setupServices() {
+  mode_srv_ = node_->create_service<a2_interfaces::srv::SetOperatingMode>(
+    "/a2/set_mode",
+    [this](const std::shared_ptr<a2_interfaces::srv::SetOperatingMode::Request> req,
+           std::shared_ptr<a2_interfaces::srv::SetOperatingMode::Response> res) {
+      setModeService(req, res);
+    });
+}
+
 void SafeVelocityRosInterface::setupTimers() {
   timer_ = node_->create_timer(control_period_, [this]() { controlLoop(); });
 }
 
 void SafeVelocityRosInterface::modeCallback(
   const a2_interfaces::msg::OperatingMode::SharedPtr msg) {
+  const OpMode requested = static_cast<OpMode>(msg->mode);
   std::lock_guard<std::mutex> lock(state_mutex_);
-  if (!mode_fsm_.mode_transition(static_cast<OpMode>(msg->mode))) {
-    RCLCPP_WARN(node_->get_logger(), "Invalid mode transition to %d", msg->mode);
+  if (!mode_fsm_.mode_transition(requested)) {
+    RCLCPP_WARN(node_->get_logger(), "Invalid mode transition to %s (current %s)",
+                to_string(requested), to_string(mode_fsm_.peek_mode()));
     return;
   }
-  RCLCPP_INFO(node_->get_logger(), "Mode Requested: %d", msg->mode);
+  RCLCPP_INFO(node_->get_logger(), "Mode requested: %s", to_string(requested));
+}
+
+void SafeVelocityRosInterface::setModeService(
+  const std::shared_ptr<a2_interfaces::srv::SetOperatingMode::Request> req,
+  std::shared_ptr<a2_interfaces::srv::SetOperatingMode::Response> res) {
+  const OpMode requested = static_cast<OpMode>(req->mode);
+  std::lock_guard<std::mutex> lock(state_mutex_);
+  res->success = mode_fsm_.mode_transition(requested);
+  const OpMode current = mode_fsm_.peek_mode();
+  res->current_mode = static_cast<uint8_t>(current);
+  if (res->success) {
+    res->message = std::string("Now in ") + to_string(current);
+    RCLCPP_INFO(node_->get_logger(), "Mode set to %s", to_string(current));
+  } else {
+    res->message = std::string("Cannot enter ") + to_string(requested) + " from " +
+                   to_string(current);
+    RCLCPP_WARN(node_->get_logger(), "Rejected mode request %s (current %s)", to_string(requested),
+                to_string(current));
+  }
 }
 
 void SafeVelocityRosInterface::cmdVelCallback(
