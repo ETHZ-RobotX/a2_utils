@@ -70,10 +70,11 @@ void SafeVelocityRosInterface::controlLoop() {
     std::tie(mode, mode_changed) = mode_fsm_.get_mode();
     vel = mode_fsm_.get_cmd_vel();
   }
+
   if (mode != OpMode::VELOCITY_MOVE && !mode_changed) {
-    // Nothing changed when not in velocity move, so noop
     return;
   }
+
   onControl(mode, mode_changed, vel);
 }
 

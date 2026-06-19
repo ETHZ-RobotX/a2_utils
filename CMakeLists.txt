@@ -18,8 +18,9 @@ find_package(geometry_msgs REQUIRED)
 find_package(unitree_api REQUIRED)
 find_package(a2_interfaces REQUIRED)
 
-# ── ModeFsm library (pure C++, no ROS dep) ────────────────────────────────────
+# ── ModeFsm library ──────────────────────────────────────────────────────────
 add_library(a2_mode_fsm src/mode_fsm.cpp)
+ament_target_dependencies(a2_mode_fsm rclcpp)
 target_include_directories(a2_mode_fsm PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>

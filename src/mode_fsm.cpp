@@ -1,6 +1,7 @@
 #include "a2_utils/mode_fsm.hpp"
 
 #include <algorithm>
+#include <rclcpp/logging.hpp>
 #include <stdexcept>
 
 namespace a2 {
@@ -44,6 +45,7 @@ bool ModeFsm::mode_transition(OpMode next) {
   mode_ = next;
   mode_changed_ = true;
   reset_cmd_vel();
+  RCLCPP_INFO(rclcpp::get_logger("mode_fsm"), "reset cmd_vel on mode transition");
   return true;
 }
 
@@ -65,7 +67,9 @@ bool ModeFsm::set_cmd_vel(float x, float y, float yaw) {
     cmd_vel_[2] = std::clamp(yaw, -max_yaw_rate_, max_yaw_rate_);
     return true;
   }
+  
   reset_cmd_vel();
+  RCLCPP_INFO(rclcpp::get_logger("mode_fsm"), "reset cmd_vel on set_cmd_vel (mode != VELOCITY_MOVE)");
   return false;
 }
 
@@ -77,7 +81,7 @@ std::pair<OpMode, bool> ModeFsm::get_mode() {
 
 std::array<float, 3> ModeFsm::get_cmd_vel() {
   auto rval = cmd_vel_;
-  reset_cmd_vel();
+  // reset_cmd_vel();
   return rval;
 }
 
