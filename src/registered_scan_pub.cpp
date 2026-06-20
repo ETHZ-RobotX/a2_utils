@@ -25,7 +25,7 @@ public:
     tf_buffer_(this->get_clock()),
     tf_listener_(tf_buffer_)
   {
-    declare_parameter("input_topic",  "/mujoco/front_lidar");
+    declare_parameter("input_topic",  "/front_lidar/points");
     declare_parameter("target_frame", "map");
     declare_parameter("tf_lag_sec",   0.025);
 
